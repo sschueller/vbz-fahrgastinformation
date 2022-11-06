@@ -260,7 +260,7 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     // 128 - 16 = 112
 
     Display::dma_display->setTextColor(Display::vbzYellow);
-    Display::dma_display->setCursor(109 + xPos, lineNumber);
+    Display::dma_display->setCursor(108 + xPos, lineNumber);
     Display::dma_display->setTextWrap(false);
     Display::dma_display->print(ttlCh);
 
