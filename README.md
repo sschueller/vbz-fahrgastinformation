@@ -1,0 +1,1 @@
+-> station list: https://opentransportdata.swiss/de/dataset/bav_liste

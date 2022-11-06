@@ -1,0 +1,33 @@
+#ifndef CONFIG_H
+#define CONFIG_H
+
+#define TIME_SERVER "0.ch.pool.ntp.org"
+#define AP_NAME "vbz-anzeige"
+#define AP_PASSWORD "123456"
+
+// Api
+#define OPEN_DATA_API_KEY "XXXXX"
+#define OPEN_DATA_URL "https://api.opentransportdata.swiss/trias2020"
+#define OPEN_DATA_STATION "8576193" // Zürich Bellevue
+#define OPEN_DATA_RESULTS "5"
+
+// Display
+#define R1_PIN 25 // TCK
+#define G1_PIN 26 //
+#define B1_PIN 27
+#define R2_PIN 14
+#define G2_PIN 12
+#define B2_PIN 13
+#define A_PIN 23
+#define B_PIN 19
+#define C_PIN 5
+#define D_PIN 17
+#define E_PIN 18 // required for 1/32 scan panels, like 64x64. Any available pin would do, i.e. IO32
+#define LAT_PIN 4
+#define OE_PIN 15
+#define CLK_PIN 16
+#define PANEL_RES_X 128 // Number of pixels wide of each INDIVIDUAL panel module.
+#define PANEL_RES_Y 64  // Number of pixels tall of each INDIVIDUAL panel module.
+#define PANEL_CHAIN 1   // Total number of panels chained one to another
+
+#endif

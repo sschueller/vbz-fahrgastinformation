@@ -1,0 +1,28 @@
+{
+    "files.associations": {
+        "vbz-font.c": "cpp",
+        "system_error": "cpp",
+        "array": "cpp",
+        "functional": "cpp",
+        "tuple": "cpp",
+        "type_traits": "cpp",
+        "utility": "cpp",
+        "bitset": "cpp",
+        "deque": "cpp",
+        "string": "cpp",
+        "vector": "cpp",
+        "unordered_map": "cpp",
+        "regex": "cpp",
+        "*.tcc": "cpp",
+        "forward_list": "cpp",
+        "unordered_set": "cpp",
+        "string_view": "cpp",
+        "initializer_list": "cpp",
+        "ratio": "cpp",
+        "memory": "cpp",
+        "istream": "cpp",
+        "random": "cpp",
+        "chrono": "cpp",
+        "cmath": "cpp"
+    }
+}
