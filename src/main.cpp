@@ -17,18 +17,20 @@
 // GMT 0 = 0
 int timeOffset = 3600;
 const char timeServer[11] = TIME_SERVER;
+int sensorValue;
+int loopCounter = 0;
 
 OpenTransportDataSwiss api(
     OPEN_DATA_STATION,
     OPEN_DATA_URL,
     OPEN_DATA_API_KEY,
     OPEN_DATA_RESULTS);
-    
+
 Display display;
 
 WebServer Server;
 AutoConnect Portal(Server);
-AutoConnectConfig config(AP_NAME, AP_PASSWORD);
+AutoConnectConfig Config;
 
 // Define NTP Client to get time
 WiFiUDP ntpUDP;
@@ -37,7 +39,7 @@ WiFiClient client;
 
 bool startCP(IPAddress ip)
 {
-  display.connectionMsg();
+  display.connectionMsg(AP_NAME, AP_PASSWORD);
   delay(10000);
   return true;
 }
@@ -73,6 +75,15 @@ void setup()
   Serial.println("Debug Enabled");
 #endif
 
+  Config.title = "VBZ-Anzeige";
+  Config.apid = AP_NAME;
+  Config.psk = AP_PASSWORD;
+  // Config.staip = IPAddress(192,168,4,100);
+  // Config.staGateway = IPAddress(192,168,1,1);
+  // Config.staNetmask = IPAddress(255,255,255,0);
+  // Config.dns1 = IPAddress(192,168,1,1);
+
+  Portal.config(Config);
   Portal.onDetect(startCP);
 
   if (Portal.begin())
@@ -104,9 +115,25 @@ void loop()
   Serial.println("Time: " + timeClient.getFormattedDate());
 #endif
 
-  api.getWebData(timeClient);
+  // brightness sensor
+  sensorValue = analogRead(A0);
+  sensorValue = map(sensorValue, 0, 4095, 32, 255);
+  display.displaySetBrightness(sensorValue);
 
-  display.printLines(api.doc.as<JsonArray>());
+  // Serial.println(touchRead(touchRead(GPIO_NUM_32)));
 
-  delay(30000);
+  if (loopCounter == 0)
+  {
+    api.getWebData(timeClient);
+    display.printLines(api.doc.as<JsonArray>());
+  }
+
+  loopCounter++;
+
+  if (loopCounter > 30)
+  {
+    loopCounter = 0;
+  }
+
+  delay(1000);
 }

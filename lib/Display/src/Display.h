@@ -37,7 +37,9 @@ public:
 
     void showIpAddress(const char *ipAddress);
     void connectingMsg();
-    void connectionMsg();
+    void connectionMsg(String apName, String password);
+
+    void displaySetBrightness(int brightness);
 
     uint16_t getVbzFontColor(int line);
     uint16_t getVbzBackgroundColor(int line);

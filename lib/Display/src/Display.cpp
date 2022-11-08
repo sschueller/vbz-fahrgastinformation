@@ -41,6 +41,11 @@ void Display::begin(int r1_pin,
     Display::dma_display->fillScreen(Display::myBLACK);
 }
 
+void Display::displaySetBrightness(int brightness)
+{
+    Display::dma_display->setBrightness8(brightness); //0-255
+}
+
 void Display::showIpAddress(const char *ipAddress)
 {
     Display::dma_display->fillScreen(Display::myBLACK);
@@ -60,15 +65,15 @@ void Display::connectingMsg()
     Display::dma_display->println("connecting...");
 }
 
-void Display::connectionMsg()
+void Display::connectionMsg(String apName, String password)
 {
     Display::dma_display->fillScreen(Display::myBLACK);
     Display::dma_display->setFont(&vbzfont);
     Display::dma_display->setTextSize(1);
     Display::dma_display->setCursor(0, 0);
     Display::dma_display->println("connect to:");
-    Display::dma_display->println("esp32ap");
-    Display::dma_display->println("pwd: 12345678");
+    Display::dma_display->println(apName);
+    Display::dma_display->println("pwd: " + password);
 }
 
 void Display::printLines(JsonArray data)
@@ -111,10 +116,10 @@ uint8_t Display::getRightAlignStartingPoint(const char *str, int16_t width)
     int advance = canvas.getCursorX() + 1;
 
 #ifdef DEBUG
-    Serial.print("----");
-    Serial.print(str);
-    Serial.print(" cx:");
-    Serial.print(advance);
+    // Serial.print("----");
+    // Serial.print(str);
+    // Serial.print(" cx:");
+    // Serial.print(advance);
     // Serial.print(" r:");
     // Serial.print(width);
     // Serial.print(" x1:");
@@ -125,7 +130,7 @@ uint8_t Display::getRightAlignStartingPoint(const char *str, int16_t width)
     // Serial.print(w);
     // Serial.print(" h:");
     // Serial.print(h);
-    Serial.println("***");
+    // Serial.println("***");
 #endif
 
     return (width - advance);
@@ -182,12 +187,12 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     int xPos = Display::getRightAlignStartingPoint(line.c_str(), 23);
 
 #ifdef DEBUG
-    Serial.print(xPos);
-    Serial.print(",");
-    Serial.print(lineNumber);
-    Serial.print("->");
-    Serial.print(infoLine);
-    Serial.print(":\n");
+    // Serial.print(xPos);
+    // Serial.print(",");
+    // Serial.print(lineNumber);
+    // Serial.print("->");
+    // Serial.print(infoLine);
+    // Serial.print(":\n");
 #endif
 
     Display::dma_display->fillRect(0, lineNumber, 24, 11, getVbzBackgroundColor(line.toInt()));
@@ -217,12 +222,12 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     Display::dma_display->print(infoLine);
 
 #ifdef DEBUG
-    Serial.print(xPos);
-    Serial.print(",");
-    Serial.print(lineNumber);
-    Serial.print("->");
-    Serial.print(infoLine);
-    Serial.print(":\n\n");
+    // Serial.print(xPos);
+    // Serial.print(",");
+    // Serial.print(lineNumber);
+    // Serial.print("->");
+    // Serial.print(infoLine);
+    // Serial.print(":\n\n");
 #endif
 
     // Accessibility

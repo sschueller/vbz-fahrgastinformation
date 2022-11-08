@@ -23,6 +23,8 @@
         "istream": "cpp",
         "random": "cpp",
         "chrono": "cpp",
-        "cmath": "cpp"
+        "cmath": "cpp",
+        "cstddef": "cpp",
+        "limits": "cpp"
     }
 }
