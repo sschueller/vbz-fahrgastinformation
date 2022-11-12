@@ -12,6 +12,9 @@ class Display
 {
 
 public:
+
+    int maxDestinationPixels = 68; // max length of pixels on display for destination
+
     void begin(int r1_pin,
                int g1_pin,
                int b1_pin,
@@ -32,7 +35,7 @@ public:
 
     uint8_t getRightAlignStartingPoint(const char *str, int16_t width);
 
-    void printLine(String line, String lineRef, String direction, bool accessible, int timeToArrival, bool liveData, int position);
+    void printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, int position);
     void printLines(JsonArray data);
 
     void showIpAddress(const char *ipAddress);
@@ -46,6 +49,9 @@ public:
 
     uint16_t getVbzFontColor(String lineRef);
     uint16_t getVbzBackgroundColor(String lineRef);
+
+    String cropDestination(String destination);
+    int getTextUsedLength(String text);
 
 private:
     MatrixPanel_I2S_DMA *dma_display = nullptr;

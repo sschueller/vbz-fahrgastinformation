@@ -178,11 +178,11 @@ uint8_t Display::getRightAlignStartingPoint(const char *str, int16_t width)
     return (width - advance);
 }
 
-void Display::printLine(String line, String lineRef, String direction, bool accessible, int timeToArrival, bool liveData, int position)
+void Display::printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, int position)
 {
 
     //
-    // | Line       | Space     | Direction | Space     | Accessibility  | Space      | TTA        |
+    // | Line       | Space     | Destination | Space     | Accessibility  | Space      | TTA        |
     // | <-- 20 --> | <-- 6 --> | <-- X --> | <--   --> | <--      ---> | <--   -->  | <-- 16 --> |
     // | Right Align|           | Left Align|           | Left Align    |            | Right Align|
     //
@@ -206,12 +206,12 @@ void Display::printLine(String line, String lineRef, String direction, bool acce
     }
 
 #ifdef DEBUG
-    Serial.printf("%d|%s|%s|%s|%d|%s|%s\n", position, line.c_str(), lineRef.c_str(), direction.c_str(), timeToArrival, NF.c_str(), LD.c_str());
+    Serial.printf("%d|%s|%s|%s|%d|%s|%s\n", position, line.c_str(), lineRef.c_str(), destination.c_str(), timeToArrival, NF.c_str(), LD.c_str());
 #endif
 
     char infoLine[25];
     char lineCh[20];
-    char directionCh[25];
+    char destinationCh[25];
     char accessCh[1];
     char ttlCh[5];
 
@@ -243,20 +243,9 @@ void Display::printLine(String line, String lineRef, String direction, bool acce
     Display::dma_display->print(infoLine);
 
     // Direction
-    direction.replace("Zürich,", "");
-    direction.replace("Bahnhof ", "");
-
-    direction.replace("ä", "\x7B");
-    direction.replace("ö", "\x7C");
-    direction.replace("ü", "\x7D");
-
-    direction.trim();
-    if (direction.length() > 12)
-    {
-        direction = direction.substring(0, 12 - 1) + ".";
-    }
-    direction.toCharArray(directionCh, 25);
-    sprintf(infoLine, "%s", directionCh);
+    destination = Display::cropDestination(destination);
+    destination.toCharArray(destinationCh, 25);
+    sprintf(infoLine, "%s", destinationCh);
 
     Display::dma_display->setTextColor(Display::vbzYellow);
     Display::dma_display->setCursor(27, lineNumber);
@@ -466,4 +455,46 @@ int Display::getLinRefId(String lineRef)
         lineRef.indexOf(":") + 6);
 
     return refId.toInt();
+}
+
+String Display::cropDestination(String destination)
+{
+    // remove extra text
+    destination.replace("Zürich,", "");
+    destination.replace("Winterthur,", "");
+    destination.replace("Bahnhof ", "");
+
+    // fix umlauts being in wrong position in font
+    destination.replace("ä", "\x7B");
+    destination.replace("ö", "\x7C");
+    destination.replace("ü", "\x7D");
+
+    // shorten destination if too long
+    destination.trim();
+
+    bool textWasTooLong = (Display::getTextUsedLength(destination) >= Display::maxDestinationPixels);
+
+    // remove characters until text fits in max width
+    while (Display::getTextUsedLength(destination) >= Display::maxDestinationPixels)
+    {
+        destination = destination.substring(0, destination.length() - 1);
+    }
+
+    if (textWasTooLong)
+    {
+        destination = destination + ".";
+    }
+
+    return destination;
+}
+
+int Display::getTextUsedLength(String text)
+{
+    GFXcanvas1 canvas(Display::dma_display->width(), 16);
+    canvas.setFont(&vbzfont);
+    canvas.setTextSize(1);
+    canvas.setTextWrap(false);
+    canvas.setCursor(0, 0);
+    canvas.print(text);
+    return canvas.getCursorX() + 1;
 }
