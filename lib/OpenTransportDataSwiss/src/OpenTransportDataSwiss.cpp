@@ -104,7 +104,6 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                     String result = https.getString();
 
                     int index = result.indexOf("</trias:StopEvent>");
-
                     int counter = 0;
 
                     JsonArray data = doc.to<JsonArray>();
@@ -124,6 +123,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         // find sched dep time <trias:TimetabledTime>2022-11-05T19:43:00Z</trias:TimetabledTime>
                         String departureTime;
                         bool liveData = false;
+                        bool isLate = false;
                         if (part.indexOf("<trias:EstimatedTime>") != -1)
                         {
                             // Has live data
@@ -132,6 +132,20 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                                 "<trias:EstimatedTime>",
                                 "</trias:EstimatedTime>",
                                 part);
+
+                            // check if late
+                            String scheduledTime = OpenTransportDataSwiss::getXmlValue(
+                                "<trias:TimetabledTime>",
+                                "</trias:TimetabledTime>",
+                                part);
+
+                            uint32_t drift = OpenTransportDataSwiss::GetTimeToDeparture(scheduledTime, departureTime);
+                            // Serial.printf("drift: %d\n", drift);
+
+                            if (drift >= OpenTransportDataSwiss::lateMinCutoff) {
+                                isLate = true;
+                            }
+
                         }
                         else
                         {
@@ -190,6 +204,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         item["line"] = line;
                         item["lineRef"] = lineRef;
                         item["isNF"] = isNF;
+                        item["isLate"] = isLate;
                         item["destination"] = destination;
 
                         data.add(item);

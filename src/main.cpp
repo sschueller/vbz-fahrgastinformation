@@ -137,6 +137,7 @@ void loop()
   {
     if (int apiCode = api.getWebData(timeClient) == 0)
     {
+      // Serial.println(api.doc.as<String>());
       display.printLines(api.doc.as<JsonArray>());
     }
     else

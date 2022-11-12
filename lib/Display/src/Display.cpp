@@ -134,6 +134,7 @@ void Display::printLines(JsonArray data)
                 value["isNF"].as<bool>(),
                 value["ttl"].as<int>(),
                 value["liveData"].as<bool>(),
+                value["isLate"].as<bool>(),
                 index);
             index++;
         }
@@ -178,7 +179,7 @@ uint8_t Display::getRightAlignStartingPoint(const char *str, int16_t width)
     return (width - advance);
 }
 
-void Display::printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, int position)
+void Display::printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, bool isLate, int position)
 {
 
     //
@@ -289,7 +290,12 @@ void Display::printLine(String line, String lineRef, String destination, bool ac
     }
     else
     {
-        sprintf(ttlCh, "%d", timeToArrival);
+        if (isLate) {
+            sprintf(ttlCh, ">%d", timeToArrival);
+        } else {
+            sprintf(ttlCh, "%d", timeToArrival);
+        }
+        
         xPos = Display::getRightAlignStartingPoint(ttlCh, 16);
     }
 

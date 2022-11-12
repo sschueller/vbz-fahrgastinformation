@@ -21,13 +21,14 @@ public:
         String numResults);
 
     String numResultsString;
+    int lateMinCutoff = 3;
     String stopPointBPUIC;
     String direction;
     String openDataUrl;
     String apiKey;
     String httpLastError;
 
-    StaticJsonDocument<1000> doc;
+    StaticJsonDocument<1500> doc;
 
     int getWebData(NTPClient timeClient);
     String FormatTimeStamp(String formattedDate, String format);

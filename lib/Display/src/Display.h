@@ -35,7 +35,7 @@ public:
 
     uint8_t getRightAlignStartingPoint(const char *str, int16_t width);
 
-    void printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, int position);
+    void printLine(String line, String lineRef, String destination, bool accessible, int timeToArrival, bool liveData, bool isLate, int position);
     void printLines(JsonArray data);
 
     void showIpAddress(const char *ipAddress);
