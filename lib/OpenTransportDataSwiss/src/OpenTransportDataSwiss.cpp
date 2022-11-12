@@ -1,6 +1,7 @@
 #include <OpenTransportDataSwiss.h>
 
 OpenTransportDataSwiss::OpenTransportDataSwiss(String stopPointBPUIC,
+                                               String direction,
                                                String openDataUrl,
                                                String apiKey,
                                                String numResults)
@@ -8,15 +9,23 @@ OpenTransportDataSwiss::OpenTransportDataSwiss(String stopPointBPUIC,
 
     OpenTransportDataSwiss::numResultsString = numResults;
     OpenTransportDataSwiss::stopPointBPUIC = stopPointBPUIC;
+    OpenTransportDataSwiss::direction = direction;
     OpenTransportDataSwiss::openDataUrl = openDataUrl;
     OpenTransportDataSwiss::apiKey = apiKey;
 }
 
-void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
+int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
 {
     WiFiClientSecure *client = new WiFiClientSecure;
     if (client)
     {
+        // If we only one one direction we need to get the double amount of results in order to fill the display
+        int resultsToGet = OpenTransportDataSwiss::numResultsString.toInt();
+        if (OpenTransportDataSwiss::direction != "A")
+        {
+            resultsToGet = resultsToGet * 2;
+        }
+
         // client->setCACert(rootCACertificate);
         client->setInsecure(); // should not be required
 
@@ -39,7 +48,7 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
         PostData += "                <DepArrTime>" + OpenTransportDataSwiss::GetTimeStamp(timeClient, "DepArrTime") + "</DepArrTime>";
         PostData += "            </Location>";
         PostData += "            <Params>";
-        PostData += "                <NumberOfResults>" + OpenTransportDataSwiss::numResultsString + "</NumberOfResults>";
+        PostData += "                <NumberOfResults>" + (String)resultsToGet + "</NumberOfResults>";
         PostData += "                <StopEventType>departure</StopEventType>";
         PostData += "                <IncludePreviousCalls>false</IncludePreviousCalls>";
         PostData += "                <IncludeOnwardCalls>false</IncludeOnwardCalls>";
@@ -97,6 +106,8 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
 
                     JsonArray data = doc.to<JsonArray>();
 
+                    // Serial.printf("xml: %s\n", result.c_str());
+
                     while (index != -1)
                     {
                         String part = result.substring(
@@ -151,7 +162,18 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                             isNF = true;
                         }
 
+                        String lineRef = part.substring(
+                            part.indexOf("<trias:LineRef>") + 15,
+                            part.indexOf("</trias:LineRef>"));
+
                         // Serial.printf("NF: %d: %s\n", index, isNF);
+
+                        // match direction if set and skip if it doesn't match
+                        String refDirection = lineRef.substring(lineRef.lastIndexOf(":") + 1, lineRef.length());
+                        if (OpenTransportDataSwiss::direction != "A" && refDirection != OpenTransportDataSwiss::direction)
+                        {
+                            continue;
+                        }
 
                         StaticJsonDocument<200> doc2;
                         JsonObject item = doc2.to<JsonObject>();
@@ -160,6 +182,7 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         item["ttl"] = OpenTransportDataSwiss::GetTimeToDeparture(OpenTransportDataSwiss::GetTimeStamp(timeClient, "RequestTimestamp"), departureTime);
                         item["liveData"] = liveData;
                         item["line"] = line;
+                        item["lineRef"] = lineRef;
                         item["isNF"] = isNF;
                         item["destination"] = destination;
 
@@ -167,15 +190,27 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
 
                         counter++;
                     }
+
+                    return 0;
                 }
                 else
                 {
                     Serial.printf("[HTTPS] POST... failed, http code error: %s\n", https.errorToString(httpCode).c_str());
+
+                    if (httpCode == 403)
+                    {
+                        OpenTransportDataSwiss::httpLastError = "ERROR: Authentication Failed. API key may be incorrect or expired. Code: " + (String) httpCode;
+                    }
+                    else
+                    {
+                        OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String) httpCode;
+                    }
                 }
             }
             else
             {
                 Serial.printf("[HTTPS] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
+                OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String) httpCode;
             }
 
             https.end();
@@ -183,6 +218,7 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
         else
         {
             Serial.printf("[HTTPS] Unable to connect\n");
+            OpenTransportDataSwiss::httpLastError = "Unable to connect";
         }
 
         // End extra scoping block
@@ -192,7 +228,10 @@ void OpenTransportDataSwiss::getWebData(NTPClient timeClient)
     else
     {
         Serial.println("Unable to create client or no stations set");
+        OpenTransportDataSwiss::httpLastError = "Unable to create client or no stations set";
     }
+
+    return 1;
 }
 
 String OpenTransportDataSwiss::GetTimeStamp(NTPClient timeClient, String format)

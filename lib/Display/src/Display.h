@@ -32,17 +32,20 @@ public:
 
     uint8_t getRightAlignStartingPoint(const char *str, int16_t width);
 
-    void printLine(String line, String direction, bool accessible, int timtToArrival, bool liveData, int position);
+    void printLine(String line, String lineRef, String direction, bool accessible, int timeToArrival, bool liveData, int position);
     void printLines(JsonArray data);
 
     void showIpAddress(const char *ipAddress);
     void connectingMsg();
     void connectionMsg(String apName, String password);
+    void printError(String apiError);
 
     void displaySetBrightness(int brightness);
 
-    uint16_t getVbzFontColor(int line);
-    uint16_t getVbzBackgroundColor(int line);
+    void showSplash();
+
+    uint16_t getVbzFontColor(String lineRef);
+    uint16_t getVbzBackgroundColor(String lineRef);
 
 private:
     MatrixPanel_I2S_DMA *dma_display = nullptr;
@@ -50,6 +53,10 @@ private:
     uint16_t vbzYellow = dma_display->color565(255, 255, 255); // 252, 249, 110
     uint16_t vbzWhite = dma_display->color565(255, 255, 255);
     uint16_t vbzBlack = dma_display->color565(0, 0, 0);
+    uint16_t vbzRed = dma_display->color565(255, 0, 0);
+
+    int getLinRefId(String lineRef);
+
 };
 
 #endif

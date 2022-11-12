@@ -19,26 +19,54 @@ void Display::begin(int r1_pin,
                     int panel_chain)
 {
 
-    HUB75_I2S_CFG mxconfig;
+    HUB75_I2S_CFG mxConfig;
 
-    mxconfig.mx_width = panel_res_x;
-    mxconfig.mx_height = panel_res_y;    // we have 64 pix heigh panels
-    mxconfig.chain_length = panel_chain; // we have 2 panels chained
-    mxconfig.gpio.e = e_pin;
+    mxConfig.mx_width = panel_res_x;
+    mxConfig.mx_height = panel_res_y;    // we have 64 pix heigh panels
+    mxConfig.chain_length = panel_chain; // we have 2 panels chained
+    mxConfig.gpio.e = e_pin;
 
-    mxconfig.gpio.r1 = g1_pin;
-    mxconfig.gpio.g1 = b1_pin;
-    mxconfig.gpio.b1 = r1_pin;
-    mxconfig.gpio.r2 = g2_pin;
-    mxconfig.gpio.g2 = b2_pin;
-    mxconfig.gpio.b2 = r2_pin;
+    mxConfig.gpio.r1 = g1_pin;
+    mxConfig.gpio.g1 = b1_pin;
+    mxConfig.gpio.b1 = r1_pin;
+    mxConfig.gpio.r2 = g2_pin;
+    mxConfig.gpio.g2 = b2_pin;
+    mxConfig.gpio.b2 = r2_pin;
 
-    Display::dma_display = new MatrixPanel_I2S_DMA(mxconfig);
+    Display::dma_display = new MatrixPanel_I2S_DMA(mxConfig);
     Display::dma_display->begin();
     Display::dma_display->setTextWrap(false);
     Display::dma_display->setBrightness8(64); //0-255
     Display::dma_display->clearScreen();
     Display::dma_display->fillScreen(Display::myBLACK);
+}
+
+void Display::showSplash()
+{
+    Display::dma_display->clearScreen();
+    Display::dma_display->fillScreen(Display::myBLACK);
+
+    // 'ch', 34x34px
+    const unsigned char epd_bitmap_ch[] PROGMEM = {
+        0x00, 0x00, 0x00, 0x00, 0x00, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f,
+        0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff,
+        0xff, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f,
+        0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff,
+        0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7e, 0x00, 0x00, 0x1f, 0x80, 0x7e, 0x00, 0x00, 0x1f, 0x80,
+        0x7e, 0x00, 0x00, 0x1f, 0x80, 0x7e, 0x00, 0x00, 0x1f, 0x80, 0x7e, 0x00, 0x00, 0x1f, 0x80, 0x7e,
+        0x00, 0x00, 0x1f, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc,
+        0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xfc, 0x0f,
+        0xff, 0x80, 0x7f, 0xfc, 0x0f, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff,
+        0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80, 0x7f, 0xff, 0xff, 0xff, 0x80,
+        0x7f, 0xff, 0xff, 0xff, 0x80, 0x00, 0x00, 0x00, 0x00, 0x00};
+
+    Display::dma_display->fillRect((128 - 34) / 2, (64 - 34) / 2, 34, 34, Display::vbzWhite);
+    Display::dma_display->drawBitmap((128 - 34) / 2, (64 - 34) / 2, epd_bitmap_ch, 34, 34, Display::vbzRed);
+
+    Display::dma_display->setFont();
+    Display::dma_display->setTextSize(1);
+    Display::dma_display->setCursor(0, 50);
+    Display::dma_display->println("opentransportdata.swiss");
 }
 
 void Display::displaySetBrightness(int brightness)
@@ -76,6 +104,19 @@ void Display::connectionMsg(String apName, String password)
     Display::dma_display->println("pwd: " + password);
 }
 
+void Display::printError(String apiError)
+{
+    Display::dma_display->clearScreen();
+    Display::dma_display->fillScreen(Display::vbzBlack);
+    Display::dma_display->setFont();
+    Display::dma_display->setTextWrap(true);
+    Display::dma_display->setTextSize(1);
+    Display::dma_display->setTextColor(Display::vbzRed);
+    Display::dma_display->setCursor(0, 0);
+    Display::dma_display->println(apiError);
+    Display::dma_display->setTextWrap(false);
+}
+
 void Display::printLines(JsonArray data)
 {
 
@@ -88,6 +129,7 @@ void Display::printLines(JsonArray data)
         {
             Display::printLine(
                 value["line"].as<String>(),
+                value["lineRef"].as<String>(),
                 value["destination"].as<String>(),
                 value["isNF"].as<bool>(),
                 value["ttl"].as<int>(),
@@ -136,7 +178,7 @@ uint8_t Display::getRightAlignStartingPoint(const char *str, int16_t width)
     return (width - advance);
 }
 
-void Display::printLine(String line, String direction, bool accessible, int timtToArrival, bool liveData, int position)
+void Display::printLine(String line, String lineRef, String direction, bool accessible, int timeToArrival, bool liveData, int position)
 {
 
     //
@@ -164,7 +206,7 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     }
 
 #ifdef DEBUG
-    Serial.printf("%d|%s|%s|%d|%s|%s\n", position, line.c_str(), direction.c_str(), timtToArrival, NF.c_str(), LD.c_str());
+    Serial.printf("%d|%s|%s|%s|%d|%s|%s\n", position, line.c_str(), lineRef.c_str(), direction.c_str(), timeToArrival, NF.c_str(), LD.c_str());
 #endif
 
     char infoLine[25];
@@ -195,8 +237,8 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     // Serial.print(":\n");
 #endif
 
-    Display::dma_display->fillRect(0, lineNumber, 24, 11, getVbzBackgroundColor(line.toInt()));
-    Display::dma_display->setTextColor(Display::getVbzFontColor(line.toInt()));
+    Display::dma_display->fillRect(0, lineNumber, 24, 11, getVbzBackgroundColor(lineRef));
+    Display::dma_display->setTextColor(Display::getVbzFontColor(lineRef));
     Display::dma_display->setCursor(xPos, lineNumber);
     Display::dma_display->print(infoLine);
 
@@ -250,7 +292,7 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     }
 
     // TTA
-    if (timtToArrival <= 0)
+    if (timeToArrival <= 0)
     {
         sprintf(ttlCh, "\x1E");
 
@@ -258,7 +300,7 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     }
     else
     {
-        sprintf(ttlCh, "%d", timtToArrival);
+        sprintf(ttlCh, "%d", timeToArrival);
         xPos = Display::getRightAlignStartingPoint(ttlCh, 16);
     }
 
@@ -269,7 +311,7 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     Display::dma_display->setTextWrap(false);
     Display::dma_display->print(ttlCh);
 
-    if (timtToArrival > 0)
+    if (timeToArrival > 0)
     {
         String liveDataMarker = "`";
         if (liveData)
@@ -283,19 +325,21 @@ void Display::printLine(String line, String direction, bool accessible, int timt
     }
 }
 
-uint16_t Display::getVbzFontColor(int line)
+uint16_t Display::getVbzFontColor(String lineRef)
 {
+    int lineId = Display::getLinRefId(lineRef);
+
     uint8_t r, g, b;
 
-    switch (line)
+    switch (lineId)
     {
-    case 8:
+    case 91008:
         // rgb(0, 0, 0)
         r = 0;
         g = 0;
         b = 0;
         break;
-    case 13:
+    case 91013:
         // rgb(0, 0, 0)
         r = 0;
         g = 0;
@@ -312,91 +356,93 @@ uint16_t Display::getVbzFontColor(int line)
     return dma_display->color565(r, g, b);
 }
 
-uint16_t Display::getVbzBackgroundColor(int line)
+uint16_t Display::getVbzBackgroundColor(String lineRef)
 {
+    int lineId = Display::getLinRefId(lineRef);
+
     uint8_t r, g, b;
 
-    switch (line)
+    switch (lineId)
     {
-    case 2:
+    case 91002:
         // rgb(229, 0, 0)
         r = 229;
         g = 0;
         b = 0;
         break;
-    case 3:
+    case 91003:
         // rgb(0, 138, 41)
         r = 0;
         g = 138;
         b = 41;
         break;
-    case 4:
+    case 91004:
         // rgb(14, 37, 110)
         r = 14;
         g = 37;
         b = 110;
         break;
-    case 5:
+    case 91005:
         // rgb(116, 69, 30)
         r = 116;
         g = 69;
         b = 30;
         break;
-    case 6:
+    case 91006:
         // rgb(204, 125, 52)
         r = 204;
         g = 128;
         b = 52;
         break;
-    case 7:
+    case 91007:
         // rgb(0, 0, 0)
         r = 0;
         g = 0;
         b = 0;
         break;
-    case 8:
+    case 91008:
         // rgb(137, 183, 0)
         r = 137;
         g = 183;
         b = 0;
         break;
-    case 9:
+    case 91009:
         // rgb(15, 38, 113)
         r = 15;
         g = 38;
         b = 113;
         break;
-    case 10:
+    case 91010:
         // rgb(228, 29, 113)
         r = 228;
         g = 29;
         b = 113;
         break;
-    case 11:
+    case 91011:
         // rgb(0, 138, 41)
         r = 0;
         g = 138;
         b = 41;
         break;
-    case 13:
+    case 91013:
         // rgb(255, 194, 0)
         r = 255;
         g = 194;
         b = 0;
         break;
-    case 14:
+    case 91014:
         // rgb(0, 140, 199)
         r = 0;
         g = 140;
         b = 199;
         break;
-    case 15:
+    case 91015:
         // rgb(228, 0, 0)
         r = 228;
         g = 0;
         b = 0;
         break;
-    case 17:
+    case 91017:
         // rgb(144, 29, 77)
         r = 144;
         g = 29;
@@ -411,4 +457,13 @@ uint16_t Display::getVbzBackgroundColor(int line)
     }
 
     return dma_display->color565(r, g, b);
+}
+
+int Display::getLinRefId(String lineRef)
+{
+    String refId = lineRef.substring(
+        lineRef.indexOf(":") + 1,
+        lineRef.indexOf(":") + 6);
+
+    return refId.toInt();
 }

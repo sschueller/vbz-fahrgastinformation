@@ -15,18 +15,21 @@ class OpenTransportDataSwiss
 public:
     OpenTransportDataSwiss(
         String stopPointBPUIC,
+        String direction,
         String openDataUrl,
         String apiKey,
         String numResults);
 
     String numResultsString;
     String stopPointBPUIC;
+    String direction;
     String openDataUrl;
     String apiKey;
+    String httpLastError;
 
     StaticJsonDocument<1000> doc;
 
-    void getWebData(NTPClient timeClient);
+    int getWebData(NTPClient timeClient);
     String GetTimeStamp(NTPClient timeClient, String format);
     uint32_t GetTimeToDeparture(String apiCallTime, String departureTime);
     uint32_t GetEpochTime(String dateTimeStamp);

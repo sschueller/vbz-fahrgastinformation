@@ -10,6 +10,7 @@
 #define OPEN_DATA_URL "https://api.opentransportdata.swiss/trias2020"
 #define OPEN_DATA_STATION "8576193" // Zürich Bellevue
 #define OPEN_DATA_RESULTS "5"
+#define OPEN_DATA_DIRECTION "A" // H = Outward, R = Return, A = All
 
 // Display
 #define R1_PIN 25 // TCK

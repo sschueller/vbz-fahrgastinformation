@@ -22,6 +22,7 @@ int loopCounter = 0;
 
 OpenTransportDataSwiss api(
     OPEN_DATA_STATION,
+    OPEN_DATA_DIRECTION,
     OPEN_DATA_URL,
     OPEN_DATA_API_KEY,
     OPEN_DATA_RESULTS);
@@ -48,6 +49,12 @@ void setup()
 {
   delay(1000);
 
+#ifdef DEBUG
+  Serial.begin(MONITOR_SPEED);
+  Serial.setDebugOutput(true);
+  Serial.println("Debug Enabled");
+#endif
+
   display.begin(
       R1_PIN,
       G1_PIN,
@@ -67,13 +74,11 @@ void setup()
       PANEL_RES_Y,
       PANEL_CHAIN);
 
-  display.connectingMsg();
+  display.showSplash();
 
-#ifdef DEBUG
-  Serial.begin(MONITOR_SPEED);
-  Serial.setDebugOutput(true);
-  Serial.println("Debug Enabled");
-#endif
+  delay(3000);
+
+  display.connectingMsg();
 
   Config.title = "VBZ-Anzeige";
   Config.apid = AP_NAME;
@@ -106,9 +111,15 @@ void loop()
 {
   Portal.handleClient();
 
+  int timeTimer = 0;
   while (!timeClient.update())
   {
+    if (timeTimer > 30) {
+      display.printError("Unable to get time\nfrom NTP Server:\n" + (String) TIME_SERVER);
+    }
+
     timeClient.forceUpdate();
+    timeTimer++;
   }
 
 #ifdef DEBUG
@@ -117,15 +128,21 @@ void loop()
 
   // brightness sensor
   sensorValue = analogRead(A0);
-  sensorValue = map(sensorValue, 0, 4095, 32, 255);
+  sensorValue = map(sensorValue, 0, 4095, 12, 255);
   display.displaySetBrightness(sensorValue);
 
   // Serial.println(touchRead(touchRead(GPIO_NUM_32)));
 
   if (loopCounter == 0)
   {
-    api.getWebData(timeClient);
-    display.printLines(api.doc.as<JsonArray>());
+    if (int apiCode = api.getWebData(timeClient) == 0)
+    {
+      display.printLines(api.doc.as<JsonArray>());
+    }
+    else
+    {
+      display.printError(api.httpLastError);
+    }
   }
 
   loopCounter++;
