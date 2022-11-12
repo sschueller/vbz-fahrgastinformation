@@ -25,6 +25,7 @@
         "chrono": "cpp",
         "cmath": "cpp",
         "cstddef": "cpp",
-        "limits": "cpp"
+        "limits": "cpp",
+        "new": "cpp"
     }
 }

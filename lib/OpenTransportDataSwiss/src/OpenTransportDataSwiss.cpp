@@ -191,6 +191,11 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         counter++;
                     }
 
+                    if (data.isNull()) {
+                        Serial.printf("No data: %s\n", result.c_str());
+                    }
+                    https.end();
+                    delete client;
                     return 0;
                 }
                 else

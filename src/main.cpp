@@ -147,7 +147,7 @@ void loop()
 
   loopCounter++;
 
-  if (loopCounter > 30)
+  if (loopCounter > 31)
   {
     loopCounter = 0;
   }
