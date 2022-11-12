@@ -30,9 +30,10 @@ public:
     StaticJsonDocument<1000> doc;
 
     int getWebData(NTPClient timeClient);
-    String GetTimeStamp(NTPClient timeClient, String format);
+    String FormatTimeStamp(String formattedDate, String format);
     uint32_t GetTimeToDeparture(String apiCallTime, String departureTime);
     uint32_t GetEpochTime(String dateTimeStamp);
+    String getXmlValue(String xmlStartElement, String xmlEndElement, String xmlDocument);
 
 private:
     const char *rootCACertificate;

@@ -199,10 +199,10 @@ void Display::printLine(String line, String lineRef, String direction, bool acce
         NF = "NF";
     }
 
-    String LD = "";
+    String LD = "S";
     if (liveData)
     {
-        LD = "*";
+        LD = "L";
     }
 
 #ifdef DEBUG
@@ -313,10 +313,10 @@ void Display::printLine(String line, String lineRef, String direction, bool acce
 
     if (timeToArrival > 0)
     {
-        String liveDataMarker = "`";
+        String liveDataMarker = "'";
         if (liveData)
         {
-            liveDataMarker = "'";
+            liveDataMarker = "`";
         }
         Display::dma_display->setTextColor(Display::vbzYellow);
         Display::dma_display->setCursor(125, lineNumber);

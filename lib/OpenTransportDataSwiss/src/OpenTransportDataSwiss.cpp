@@ -29,6 +29,9 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
         // client->setCACert(rootCACertificate);
         client->setInsecure(); // should not be required
 
+        // get a timestamp to "now"
+        String formattedDate = timeClient.getFormattedDate();
+
         // Add a scoping block for HTTPClient https to make sure it is destroyed before WiFiClientSecure *client is
         HTTPClient https;
 
@@ -37,7 +40,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
         PostData += "xmlns:siri=\"http://www.siri.org.uk/siri\"";
         PostData += "xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\">";
         PostData += "<ServiceRequest>";
-        PostData += "    <siri:RequestTimestamp>" + OpenTransportDataSwiss::GetTimeStamp(timeClient, "RequestTimestamp") + "</siri:RequestTimestamp>";
+        PostData += "    <siri:RequestTimestamp>" + OpenTransportDataSwiss::FormatTimeStamp(formattedDate, "RequestTimestamp") + "</siri:RequestTimestamp>";
         PostData += "    <siri:RequestorRef>API-Explorer</siri:RequestorRef>";
         PostData += "    <RequestPayload>";
         PostData += "        <StopEventRequest>";
@@ -45,7 +48,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
         PostData += "                <LocationRef>";
         PostData += "                    <StopPointRef>" + OpenTransportDataSwiss::stopPointBPUIC + "</StopPointRef>";
         PostData += "                </LocationRef>";
-        PostData += "                <DepArrTime>" + OpenTransportDataSwiss::GetTimeStamp(timeClient, "DepArrTime") + "</DepArrTime>";
+        PostData += "                <DepArrTime>" + OpenTransportDataSwiss::FormatTimeStamp(formattedDate, "DepArrTime") + "</DepArrTime>";
         PostData += "            </Location>";
         PostData += "            <Params>";
         PostData += "                <NumberOfResults>" + (String)resultsToGet + "</NumberOfResults>";
@@ -110,9 +113,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
 
                     while (index != -1)
                     {
-                        String part = result.substring(
-                            result.indexOf("<trias:StopEvent>"),
-                            result.indexOf("</trias:StopEvent>"));
+                        String part = OpenTransportDataSwiss::getXmlValue("<trias:StopEvent>", "</trias:StopEvent>", result);
 
                         result.remove(0, result.indexOf("</trias:StopEvent>") + 19);
                         index = result.indexOf("</trias:StopEvent>");
@@ -127,31 +128,35 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         {
                             // Has live data
                             liveData = true;
-                            departureTime = part.substring(
-                                part.indexOf("<trias:EstimatedTime>") + 21,
-                                part.indexOf("</trias:EstimatedTime>"));
+                            departureTime = OpenTransportDataSwiss::getXmlValue(
+                                "<trias:EstimatedTime>",
+                                "</trias:EstimatedTime>",
+                                part);
                         }
                         else
                         {
                             // Has no live data, use scheduled
-                            departureTime = part.substring(
-                                part.indexOf("<trias:TimetabledTime>") + 22,
-                                part.indexOf("</trias:TimetabledTime>"));
+                            departureTime = OpenTransportDataSwiss::getXmlValue(
+                                "<trias:TimetabledTime>",
+                                "</trias:TimetabledTime>",
+                                part);
                         }
 
                         // Serial.printf("departureTime: %d: %s\n", index, departureTime.c_str());
 
                         // find destination <trias:DestinationText><trias:Text>Zürich, Rehalp</trias:Text><trias:Language>de</trias:Language></trias:DestinationText>
-                        String destination = part.substring(
-                            part.indexOf("<trias:DestinationText><trias:Text>") + 35,
-                            part.indexOf("</trias:Text><trias:Language>de</trias:Language></trias:DestinationText>"));
+                        String destination = OpenTransportDataSwiss::getXmlValue(
+                            "<trias:DestinationText><trias:Text>",
+                            "</trias:Text><trias:Language>de</trias:Language></trias:DestinationText>",
+                            part);
 
                         // Serial.printf("destination: %d: %s\n", index, destination.c_str());
 
                         // find Line <trias:PublishedLineName><trias:Text>11</trias:Text><trias:Language>de</trias:Language></trias:PublishedLineName>
-                        String line = part.substring(
-                            part.indexOf("<trias:PublishedLineName><trias:Text>") + 37,
-                            part.indexOf("</trias:Text><trias:Language>de</trias:Language></trias:PublishedLineName>"));
+                        String line = OpenTransportDataSwiss::getXmlValue(
+                            "<trias:PublishedLineName><trias:Text>",
+                            "</trias:Text><trias:Language>de</trias:Language></trias:PublishedLineName>",
+                            part);
 
                         // Serial.printf("line: %d: %s\n", index, line.c_str());
 
@@ -162,9 +167,10 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                             isNF = true;
                         }
 
-                        String lineRef = part.substring(
-                            part.indexOf("<trias:LineRef>") + 15,
-                            part.indexOf("</trias:LineRef>"));
+                        String lineRef = OpenTransportDataSwiss::getXmlValue(
+                            "<trias:LineRef>",
+                            "</trias:LineRef>",
+                            part);
 
                         // Serial.printf("NF: %d: %s\n", index, isNF);
 
@@ -179,7 +185,7 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         JsonObject item = doc2.to<JsonObject>();
 
                         item["departureTime"] = departureTime;
-                        item["ttl"] = OpenTransportDataSwiss::GetTimeToDeparture(OpenTransportDataSwiss::GetTimeStamp(timeClient, "RequestTimestamp"), departureTime);
+                        item["ttl"] = OpenTransportDataSwiss::GetTimeToDeparture(OpenTransportDataSwiss::FormatTimeStamp(formattedDate, "RequestTimestamp"), departureTime);
                         item["liveData"] = liveData;
                         item["line"] = line;
                         item["lineRef"] = lineRef;
@@ -191,7 +197,8 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
                         counter++;
                     }
 
-                    if (data.isNull()) {
+                    if (data.isNull())
+                    {
                         Serial.printf("No data: %s\n", result.c_str());
                     }
                     https.end();
@@ -204,18 +211,18 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
 
                     if (httpCode == 403)
                     {
-                        OpenTransportDataSwiss::httpLastError = "ERROR: Authentication Failed. API key may be incorrect or expired. Code: " + (String) httpCode;
+                        OpenTransportDataSwiss::httpLastError = "ERROR: Authentication Failed. API key may be incorrect or expired. Code: " + (String)httpCode;
                     }
                     else
                     {
-                        OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String) httpCode;
+                        OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String)httpCode;
                     }
                 }
             }
             else
             {
                 Serial.printf("[HTTPS] POST... failed, error: %s\n", https.errorToString(httpCode).c_str());
-                OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String) httpCode;
+                OpenTransportDataSwiss::httpLastError = "ERROR: http code error: " + (String)httpCode;
             }
 
             https.end();
@@ -239,25 +246,17 @@ int OpenTransportDataSwiss::getWebData(NTPClient timeClient)
     return 1;
 }
 
-String OpenTransportDataSwiss::GetTimeStamp(NTPClient timeClient, String format)
+String OpenTransportDataSwiss::FormatTimeStamp(String formattedDate, String format)
 {
-
     // RequestTimestamp>2022-11-04T15:38:26.611Z
     // DepArrTime>2022-11-04T16:38:26
 
-    String formattedDate = timeClient.getFormattedDate();
-    String dayStamp = formattedDate.substring(0, formattedDate.indexOf("T"));
-    String year = dayStamp.substring(0, formattedDate.indexOf("-"));
-    String month = dayStamp.substring(formattedDate.indexOf("-") + 1, formattedDate.lastIndexOf("-"));
-    String day = dayStamp.substring(formattedDate.lastIndexOf("-") + 1);
-
     if (format == "RequestTimestamp")
     {
-        return String(timeClient.getFormattedDate());
+        return formattedDate;
     }
 
-    return String(timeClient.getFormattedDate());
-    // return String(timeClient.getEpochTime());
+    return formattedDate.substring(0, formattedDate.lastIndexOf("."));
 }
 
 uint32_t OpenTransportDataSwiss::GetTimeToDeparture(String apiCallTime, String departureTime)
@@ -300,4 +299,11 @@ uint32_t OpenTransportDataSwiss::GetEpochTime(String dateTimeStamp)
     stamp.setDateTime(year, month, day, hour, minute, seconds);
 
     return stamp.getUnix();
+}
+
+String OpenTransportDataSwiss::getXmlValue(String xmlStartElement, String xmlEndElement, String xmlDocument)
+{
+    return xmlDocument.substring(
+        xmlDocument.indexOf(xmlStartElement) + xmlStartElement.length(),
+        xmlDocument.indexOf(xmlEndElement));
 }
