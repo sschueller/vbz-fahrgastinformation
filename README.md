@@ -19,7 +19,15 @@ The data is pulled of the official Open Data API located here: https://opentrans
  - Show if train or bus has level entry (Accessibility)
  - Shows VBZ tram colors for known lines. 
  - Limited direction filter (Outbound vs Return)
+ - Auto display brightness
 
+## Todo
+
+- Show service issues at a particular station however this data may not be available via opentransportdata.swiss
+- Better station direction filter to only show trips at a particular platform
+- 3d printed case for desk or wall mount
+- OTA updates
+- Custom PCB for better PCB to Display connection
 
 ## Required Hardware
 
